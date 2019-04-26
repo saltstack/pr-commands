@@ -8,6 +8,15 @@ from prcommands import *
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
+
+def validate_request(event):
+    if 'X-Hub-Signature' not in event['headers']:
+        return False
+    signature = event['headers']['X-Hub-Signature'].split('=', 1)[1]
+    payload = event['body']
+    return validate_github_request(signature, payload)
+
+
 def handler(event, context):
     log.error(event.keys())
     data = json.loads(event['body'])

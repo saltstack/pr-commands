@@ -4,6 +4,14 @@ from prcommands import *
 app = Flask(__name__)
 log = app.logger
 
+def validate_request(event):
+    if 'X-Hub-Signature' not in request.headers:
+        return False
+    signature = request.headers['X-Hub-Signature'].split('=', 1)[1]
+    payload = request.text
+    return validate_github_request(signature, payload)
+
+
 @app.route('/', methods=['POST'])
 def root():
     data = request.get_json()

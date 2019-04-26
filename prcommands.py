@@ -4,6 +4,10 @@ import re
 import requests
 import pprint
 import logging
+import time
+import functools
+import hashlib
+
 
 log = logging.getLogger(__name__)
 
@@ -11,12 +15,45 @@ log = logging.getLogger(__name__)
 uri = os.environ.get('JENKINS_URI', 'https://jenkinsci.saltstack.com/api/json')
 user = os.environ['JENKINS_USER']
 password = os.environ['JENKINS_PASS']
+github_secret = os.environ['GITHUB_SECRET']
+
+
+def validate_github_request(signature, payload, secret=github_secret):
+    if 'X-Hub-Signature' not in event['headers']:
+        return False
+    signature = event['headers']['X-Hub-Signature']
+    event['body']
+    digest = hashlib.hmac.new(secret, payload, hashlib.sha1).hexdigest()
+    if digest == signature:
+        return True
+    return False
+
+
+def timedcache(method, timeout=300):
+    '''
+    Cache the return value of a function for the the specified amount of
+    seconds.
+    '''
+    args_map = {}
+    @wraps(method)
+    def wrapper(*args, **kwargs):
+        key = (args, kwargs)
+        if key not in argsmap:
+            value = method(*args, **kwargs)
+            argsmap[key] = (value, time.time())
+        elif time.time() - argsmap[key][1] >= timeout:
+            value = method(*args, **kwargs)
+            argsmap[key] = (value, time.time())
+        else:
+            value = argsmap[key][0]
+        return value
+    return wrapper
 
 
 def parse_body(body):
     '''
     Parse the body of a github issue comment and look for 're-run' test
-    commands
+    commands.
     '''
     for line in body.lower().split('\n'):
         words = line.split()
@@ -46,6 +83,7 @@ def get_pr_jobs():
         yield job
 
 
+@timedcache
 def job_has_params(job_url):
     '''
     Determin weather a Jenkins job accepts build parameters
@@ -69,12 +107,14 @@ def job_has_params(job_url):
     return False
 
 
-def filter_jobs(jobs, on):
+def filter_jobs(jobs, keyword):
     '''
-    Filter jobs by a keyword
+    Filter jobs by a keyword. When the keyword is 'all' every job is returned
     '''
     for job in jobs:
-        if job['name'].find(on) != -1:
+        if keyword == 'all':
+            yield job
+        elif job['name'].find(keyword) != -1:
             yield job
 
 
