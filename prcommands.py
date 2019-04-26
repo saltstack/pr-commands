@@ -103,7 +103,6 @@ def job_has_params(job_url):
     if res.status_code != 200:
         raise RuntimeError("Received non 200 status code from jenkins")
     data = res.json()
-    log.error("JOB DATA %r", data)
     for d in data['property']:
         if d['_class'] == 'hudson.model.ParametersDefinitionProperty':
             return True
@@ -136,7 +135,7 @@ def build_job(job_url, pr_number, run_full, has_params):
     '''
     Request jenkins to build a job
     '''
-    log.error("job_url: %s pr_num: %s run_full: %s has_params: %s",
+    log.debug("job_url: %s pr_num: %s run_full: %s has_params: %s",
         job_url, pr_number, run_full, has_params)
     if has_params:
         pr_url = '{}/job/PR-{}/buildWithParameters?runFull={}'.format(
@@ -165,9 +164,9 @@ def build_job(job_url, pr_number, run_full, has_params):
         auth=requests.auth.HTTPBasicAuth(user, password),
     )
     if res.status_code == 201:
-        log.error("Build started: %s", pr_url)
+        log.info("Build started: %s", pr_url)
     else:
-        log.error("Build request received non 201 status: %s", res.status_code)
+        log.info("Build request received non 201 status: %s", res.status_code)
 
 
 def run_cmd(cmd, pr_number):

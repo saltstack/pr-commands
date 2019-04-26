@@ -20,8 +20,6 @@ def validate_request(event):
 
 
 def handler(event, context):
-    log.error(event.keys())
-    log.error('HEADERS %r', event['headers'])
     validate_request(event)
     data = json.loads(event['body'])
     if data['action'] not in ['created', 'edited']:
