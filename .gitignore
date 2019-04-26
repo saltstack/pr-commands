@@ -1,2 +1,17 @@
 *.pyc
 venv
+
+
+# Ignore lambda package files/dirs
+bin/
+certifi-2019.3.9.dist-info/
+certifi/
+chardet-3.0.4.dist-info/
+chardet/
+idna-2.8.dist-info/
+idna/
+open-pr-commands.zip
+requests-2.21.0.dist-info/
+requests/
+urllib3-1.24.2.dist-info/
+urllib3/
