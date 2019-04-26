@@ -10,8 +10,10 @@ log.setLevel(logging.INFO)
 
 
 def validate_request(event):
+    if 'content-type' not in event['headers'] or headers['content-type'] != 'application/json':
+        raise ValidationError("Content type is not 'application/json'")
     if 'X-Hub-Signature' not in event['headers']:
-        return False
+        raise ValidationErroor("No X-Hub-Signature in request headers")
     signature = event['headers']['X-Hub-Signature'].split('=', 1)[1]
     payload = event['body']
     return validate_github_request(signature, payload)
@@ -19,6 +21,8 @@ def validate_request(event):
 
 def handler(event, context):
     log.error(event.keys())
+    log.error('HEADERS %r', event['headers'])
+    validate_request(event)
     data = json.loads(event['body'])
     if data['action'] != 'created':
         log.error('Skipping action: %s', data['action'])

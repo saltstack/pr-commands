@@ -18,6 +18,12 @@ password = os.environ['JENKINS_PASS']
 github_secret = os.environ['GITHUB_SECRET']
 
 
+class ValidationError(Exception):
+    '''
+    Raised when an invalid request is encountered
+    '''
+
+
 def validate_github_request(signature, payload, secret=github_secret):
     if 'X-Hub-Signature' not in event['headers']:
         return False
@@ -26,7 +32,7 @@ def validate_github_request(signature, payload, secret=github_secret):
     digest = hashlib.hmac.new(secret, payload, hashlib.sha1).hexdigest()
     if digest == signature:
         return True
-    return False
+    raise ValidationError("Signature did not validate")
 
 
 def timedcache(method, timeout=300):
@@ -35,7 +41,7 @@ def timedcache(method, timeout=300):
     seconds.
     '''
     args_map = {}
-    @wraps(method)
+    @functools.wraps(method)
     def wrapper(*args, **kwargs):
         key = (args, kwargs)
         if key not in argsmap:
