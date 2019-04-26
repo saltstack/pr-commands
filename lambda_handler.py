@@ -10,7 +10,7 @@ log.setLevel(logging.INFO)
 
 
 def validate_request(event):
-    if 'content-type' not in event['headers'] or headers['content-type'] != 'application/json':
+    if 'content-type' not in event['headers'] or event['headers']['content-type'] != 'application/json':
         raise ValidationError("Content type is not 'application/json'")
     if 'X-Hub-Signature' not in event['headers']:
         raise ValidationErroor("No X-Hub-Signature in request headers")
@@ -24,7 +24,7 @@ def handler(event, context):
     log.error('HEADERS %r', event['headers'])
     validate_request(event)
     data = json.loads(event['body'])
-    if data['action'] != 'created':
+    if data['action'] not in ['created', 'edited']:
         log.error('Skipping action: %s', data['action'])
         return {
             'statusCode': 201,

@@ -6,6 +6,7 @@ import pprint
 import logging
 import time
 import functools
+import hmac
 import hashlib
 
 
@@ -25,11 +26,7 @@ class ValidationError(Exception):
 
 
 def validate_github_request(signature, payload, secret=github_secret):
-    if 'X-Hub-Signature' not in event['headers']:
-        return False
-    signature = event['headers']['X-Hub-Signature']
-    event['body']
-    digest = hashlib.hmac.new(secret, payload, hashlib.sha1).hexdigest()
+    digest = hmac.new(secret.encode(), payload.encode(), hashlib.sha1).hexdigest()
     if digest == signature:
         return True
     raise ValidationError("Signature did not validate")
@@ -40,10 +37,10 @@ def timedcache(method, timeout=300):
     Cache the return value of a function for the the specified amount of
     seconds.
     '''
-    args_map = {}
+    argsmap = {}
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
-        key = (args, kwargs)
+        key = (repr(args), repr(kwargs))
         if key not in argsmap:
             value = method(*args, **kwargs)
             argsmap[key] = (value, time.time())
@@ -89,11 +86,10 @@ def get_pr_jobs():
         yield job
 
 
-@timedcache
+# TODO: This won't work until all branches have the params config merged
+# forward?
+#@timedcache
 def job_has_params(job_url):
-    '''
-    Determin weather a Jenkins job accepts build parameters
-    '''
     res = requests.get(
         '{}/api/json'.format(job_url.rstrip('/'))
     )
@@ -107,10 +103,22 @@ def job_has_params(job_url):
     if res.status_code != 200:
         raise RuntimeError("Received non 200 status code from jenkins")
     data = res.json()
+    log.error("JOB DATA %r", data)
     for d in data['property']:
         if d['_class'] == 'hudson.model.ParametersDefinitionProperty':
             return True
     return False
+
+
+def job_has_params(job_url):
+    '''
+    Determin weather a Jenkins job accepts build parameters
+    '''
+    name = job_url.rstrip('/').rsplit('/')[-1]
+    if name in ('pr-docs', 'pr-lint',):
+        return False
+    else:
+        return True
 
 
 def filter_jobs(jobs, keyword):
@@ -128,6 +136,8 @@ def build_job(job_url, pr_number, run_full, has_params):
     '''
     Request jenkins to build a job
     '''
+    log.error("job_url: %s pr_num: %s run_full: %s has_params: %s",
+        job_url, pr_number, run_full, has_params)
     if has_params:
         pr_url = '{}/job/PR-{}/buildWithParameters?runFull={}'.format(
             job_url.rstrip('/'),
