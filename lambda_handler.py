@@ -6,7 +6,7 @@ import os
 from prcommands import *
 
 log = logging.getLogger()
-log.setLevel(logging.INFO)
+log.setLevel(log_level)
 
 
 def validate_request(event):

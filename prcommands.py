@@ -17,6 +17,7 @@ uri = os.environ.get('JENKINS_URI', 'https://jenkinsci.saltstack.com/api/json')
 user = os.environ['JENKINS_USER']
 password = os.environ['JENKINS_PASS']
 github_secret = os.environ['GITHUB_SECRET']
+log_level = os.environ.get('LOG_LEVEL', 'INFO')
 
 
 class ValidationError(Exception):
@@ -88,7 +89,7 @@ def get_pr_jobs():
 
 # TODO: This won't work until all branches have the params config merged
 # forward?
-#@timedcache
+@timedcache
 def job_has_params(job_url):
     res = requests.get(
         '{}/api/json'.format(job_url.rstrip('/'))
