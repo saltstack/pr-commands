@@ -115,7 +115,7 @@ def job_has_params(job_url):
     Determin weather a Jenkins job accepts build parameters
     '''
     name = job_url.rstrip('/').rsplit('/')[-1]
-    if name in ('pr-docs', 'pr-lint',):
+    if name in ('pr-doc', 'pr-lint',):
         return False
     else:
         return True
