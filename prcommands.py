@@ -3,10 +3,9 @@ import json
 import re
 import requests
 import pprint
-from flask import Flask, request
+import logging
 
-app = Flask(__name__)
-log = app.logger
+log = logging.getLogger(__name__)
 
 
 uri = os.environ.get('JENKINS_URI', 'https://jenkinsci.saltstack.com/api/json')
@@ -126,20 +125,3 @@ def run_cmd(cmd, pr_number):
         else:
            run_full = False
         build_job(job['url'], pr_number, run_full, has_params)
-
-
-@app.route('/', methods=['POST'])
-def root():
-    data = request.get_json()
-    if data['action'] != 'created':
-        log.error('Skipping action: %s', data['action'])
-        return '', 200
-    for cmd in parse_body(data['comment']['body']):
-        run_cmd(cmd, data['issue']['number'])
-    return '', 200
-
-
-if __name__ == '__main__':
-    app.run('0.0.0.0')
-else:
-    application = app
